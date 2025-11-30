@@ -139,5 +139,79 @@ npx hardhat ignition deploy ./ignition/modules/Lock.js
 
 3. **提款 (Withdraw)**
    - 只有合约部署者（Owner）可以调用。
-   - 在 `Write Contract` 中调用 `withdraw`。
-   - 确认交易，合约余额将全部转入你的钱包。
+-   在 `Write Contract` 中调用 `withdraw`。
+-   确认交易，合约余额将全部转入你的钱包。
+
+## Task 3: NFT 拍卖市场（升级 + 预言机）
+
+### 概述
+
+- 合约文件：
+  - `contracts/task_three/AuctionNFT.sol`：基础 ERC721，支持设置每个 Token 的 URI。
+  - `contracts/task_three/AuctionHouseUpgradeable.sol`：拍卖逻辑（UUPS 可升级）、支持 ETH/ERC20 出价与 Chainlink 价格预言机。
+- 测试文件：`test/task_three/AuctionHouseUpgradeable.test.js`
+- 部署脚本：`deploy/004_deploy_auction_house.js`
+
+### 功能点
+
+- 上架拍卖：将 NFT 转移到合约托管，记录拍卖参数。
+- 出价：
+  - 支持 ETH 出价（`payToken == address(0)`）
+  - 支持 ERC20 出价（`payToken != address(0)`）
+  - 内置“最小加价”规则，默认 `minIncrementBps = 500`（最低加价 5%）。
+- 价格换算：
+  - 使用 Chainlink ETH/USD 与 Token/USD 价格，将出价折算为 USD（18 位精度）以用于动态费率分档。
+- 结束拍卖：
+  - 成交后将 NFT 转给最高出价者
+  - 资金按照“卖家净额 + 平台手续费”进行结算
+- 撤单逻辑：
+  - 卖家可在无任何出价时撤单，NFT 退回
+  - 有出价后不可撤单（避免不公平与资金复杂度）
+- 动态手续费：
+  - 分档阈值与费率（基点）可配置：`setFeeConfig(th1, th2, bps1, bps2, bps3)`
+  - 收费地址可配置：`setFeeRecipient(address)`（默认所有者）
+
+### 参数配置
+
+- `minIncrementBps`：最低加价比例（基点，10000=100%）
+- `feeThreshold1Usd18 / feeThreshold2Usd18`：分档阈值（USD，18 位精度，如 `1000 ether` 表示 $1000）
+- `feeBps1 / feeBps2 / feeBps3`：三档费率（基点）
+- `ethUsdFeed`：Chainlink ETH/USD Aggregator 地址
+- `tokenUsdFeed[token]`：某 ERC20 的 USD Aggregator 地址
+
+### 示例（本地测试）
+
+1. 安装依赖：
+   - `npm install`
+   - `npm install @openzeppelin/contracts-upgradeable`
+
+2. 运行测试：
+   - `npx hardhat test test/task_three/AuctionHouseUpgradeable.test.js`
+
+3. 测试覆盖点：
+   - ETH 与 ERC20 出价与退款
+   - 最小加价限制（不满足则 revert "increment too small"）
+   - 卖家撤单（在无出价情况下）
+   - 动态手续费的卖家净额与平台收入
+
+### 部署（Sepolia）
+
+1. 设置环境变量：
+   - `SEPOLIA_URL`、`PRIVATE_KEY`、`ETH_USD_FEED`
+2. 执行部署：
+   - `npx hardhat deploy --network sepolia --tags AuctionHouse`
+3. 后续配置：
+   - `setTokenUsdFeed(<ERC20>, <TOKEN_USD_FEED>)`
+   - 根据业务需要，调用 `setFeeConfig` 与 `setMinIncrementBps`
+
+### 设计要点
+
+- 资金安全：
+  - 所有退款与结算路径均带有失败检查（`require(ok, "...")`），避免资金丢失
+  - 使用 `ReentrancyGuardUpgradeable` 防止重入
+- 精度一致性：
+  - 价格换算全部统一到 18 位精度，便于和 ETH/Token 金额做整数运算
+- 可升级：
+  - UUPS 模式，升级授权由 `owner` 控制
+- 事件：
+  - `AuctionCreated`、`BidPlaced`、`AuctionFinalized`，便于前端与索引服务追踪
