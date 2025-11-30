@@ -1,9 +1,15 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
+// 用例说明：
+// - mint：仅所有者可增发，总供给与余额更新，触发 Transfer(from=0x0)
+// - transfer：余额变动与 Transfer 事件
+// - approve/transferFrom：授权额度扣减、余额变化与事件
+
 describe("task_two/SimpleERC20", function () {
   let token, owner, user1, user2;
 
+  // 每次测试前部署新实例，保持测试独立
   beforeEach(async function () {
     [owner, user1, user2] = await ethers.getSigners();
     token = await ethers.deployContract("SimpleERC20", ["MyToken", "MTK"]);
@@ -11,7 +17,7 @@ describe("task_two/SimpleERC20", function () {
   });
 
   it("mint 仅限所有者，余额与总供给更新，触发事件", async function () {
-    await expect(token.connect(user1).mint(user1.address, 100n)).to.be.revertedWith("not owner");
+    await expect(token.connect(user1).mint(user1.address, 100n)).to.be.revertedWith("not owner"); // 中文含义：仅所有者可调用
     await expect(token.mint(owner.address, 100n))
       .to.emit(token, "Transfer")
       .withArgs(ethers.ZeroAddress, owner.address, 100n);
@@ -43,4 +49,3 @@ describe("task_two/SimpleERC20", function () {
     expect(await token.allowance(owner.address, user1.address)).to.equal(20n);
   });
 });
-

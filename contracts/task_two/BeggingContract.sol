@@ -27,7 +27,7 @@ contract BeggingContract is Ownable {
     /// @notice 捐赠函数，接收 ETH 并记录
     /// @dev 使用 payable 修饰符接收 ETH
     function donate() external payable {
-        require(msg.value > 0, "Donation amount must be greater than 0");
+        require(msg.value > 0, unicode"捐赠金额必须大于 0");
         
         _donations[msg.sender] += msg.value;
         emit Donation(msg.sender, msg.value);
@@ -37,7 +37,7 @@ contract BeggingContract is Ownable {
     /// @dev 仅限合约所有者调用，使用 call 方法发送 ETH 以避免 Gas 限制问题
     function withdraw() external onlyOwner {
         uint256 balance = address(this).balance;
-        require(balance > 0, "No funds to withdraw");
+        require(balance > 0, unicode"无可提取资金");
 
         (bool success, ) = owner().call{value: balance}("");
         require(success, "Transfer failed");
