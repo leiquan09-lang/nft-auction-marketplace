@@ -66,10 +66,6 @@ contract ReverseString {
         if (c == bytes1("D")) return 500;
         if (c == bytes1("M")) return 1000;
         return 0;
-
-
-
-
        }    
 }
 
