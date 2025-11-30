@@ -59,3 +59,59 @@ npx hardhat ignition deploy ./ignition/modules/Lock.js
 
 - 请勿将 `PRIVATE_KEY` 写入仓库或明文文件；推荐使用终端环境变量或安全的秘密管理方案
 - Gas 成本取决于网络拥堵与 RPC 提供方的建议费用；部署前可在测试环境充分验证
+
+## Task 2: 发行图文并茂的 NFT (MyNFT)
+
+### 1. 准备 IPFS 元数据
+
+1. **上传图片**
+   - 准备一张图片。
+   - 使用 [Pinata](https://www.pinata.cloud/) 或其他 IPFS 服务上传图片。
+   - 获取图片的 IPFS URI (例如 `ipfs://QmYourImageHash`).
+
+2. **创建元数据 JSON**
+   - 创建一个 JSON 文件，内容如下：
+     ```json
+     {
+       "name": "My Unique NFT",
+       "description": "An awesome NFT on Sepolia",
+       "image": "ipfs://QmYourImageHash",
+       "attributes": [
+         { "trait_type": "Background", "value": "Blue" }
+       ]
+     }
+     ```
+   - 将此 JSON 文件也上传到 IPFS。
+   - 获取 JSON 的 IPFS URI (例如 `ipfs://QmYourMetadataHash`)。这就是后续铸造时需要的 `tokenURI`。
+
+### 2. 部署合约 (MyNFT)
+
+- 部署到 Sepolia：
+  `npx hardhat deploy --network sepolia --tags MyNFT`
+
+- 记下部署后的合约地址 `<DEPLOYED_ADDRESS>`。
+
+### 3. 铸造 NFT
+
+- 使用 Hardhat Task 铸造 NFT：
+  ```bash
+  npx hardhat mint-nft --network sepolia --contract <DEPLOYED_ADDRESS> --recipient <YOUR_WALLET_ADDRESS> --tokenuri ipfs://QmYourMetadataHash
+  ```
+
+### 4. 查看 NFT
+
+> **注意**：OpenSea 已停止对测试网（Testnets）的支持，因此无法直接在 OpenSea 测试网上查看 Sepolia NFT。请使用以下替代方法：
+
+1. **Etherscan (查看交易与合约)**
+   - 访问 `https://sepolia.etherscan.io/address/<DEPLOYED_ADDRESS>`
+   - 在 "Transactions" 标签页可以看到铸造记录。
+   - 在 "Contract" -> "Read Contract" 标签页（如果已验证合约），调用 `tokenURI` 函数输入 `tokenId`（如 0），查看返回的 IPFS 链接。
+
+2. **验证元数据 (手动)**
+   - 获取 `tokenURI` 返回的链接（例如 `ipfs://Qm...`）。
+   - 将 `ipfs://` 替换为网关地址，例如 `https://ipfs.io/ipfs/Qm...` 或 `https://gateway.pinata.cloud/ipfs/Qm...`。
+   - 在浏览器中打开该链接，确认能看到 JSON 数据及图片链接。
+
+3. **钱包查看 (MetaMask)**
+   - **手机端**：MetaMask 手机 App 对 NFT 支持较好。切换到 Sepolia 网络，在 "NFT" 标签下选择 "Import NFT"，输入合约地址和 Token ID，即可显示图片和元数据。
+   - **插件端**：部分版本支持，在 "NFT" 标签下尝试导入。
