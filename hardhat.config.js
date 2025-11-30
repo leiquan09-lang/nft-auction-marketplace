@@ -1,5 +1,6 @@
 require("@nomicfoundation/hardhat-toolbox");
 require("hardhat-deploy");
+require("dotenv").config();
 const { task } = require("hardhat/config");
 
 task("mint-nft", "Mints a new NFT")
@@ -18,10 +19,19 @@ task("mint-nft", "Mints a new NFT")
 
 /** @type import('hardhat/config').HardhatUserConfig */
 const networks = {};
-if (process.env.SEPOLIA_URL) {
+
+const sepoliaUrl =
+  process.env.SEPOLIA_URL ||
+  (process.env.INFURA_API_KEY
+    ? `https://sepolia.infura.io/v3/${process.env.INFURA_API_KEY}`
+    : "");
+
+const privateKey = process.env.PRIVATE_KEY || process.env.PK;
+
+if (sepoliaUrl) {
   networks.sepolia = {
-    url: process.env.SEPOLIA_URL,
-    accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+    url: sepoliaUrl,
+    accounts: privateKey ? [privateKey] : [],
   };
 }
 

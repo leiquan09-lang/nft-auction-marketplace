@@ -115,3 +115,29 @@ npx hardhat ignition deploy ./ignition/modules/Lock.js
 3. **钱包查看 (MetaMask)**
    - **手机端**：MetaMask 手机 App 对 NFT 支持较好。切换到 Sepolia 网络，在 "NFT" 标签下选择 "Import NFT"，输入合约地址和 Token ID，即可显示图片和元数据。
    - **插件端**：部分版本支持，在 "NFT" 标签下尝试导入。
+
+## Task 2 (作业 3): 讨饭合约 (BeggingContract)
+
+### 1. 部署合约
+
+- 部署到 Sepolia：
+  `npx hardhat deploy --network sepolia --tags BeggingContract`
+
+- 记下合约地址 `<DEPLOYED_ADDRESS>`。
+
+### 2. 测试功能
+
+1. **捐赠 (Donate)**
+   - 在 Etherscan 上找到你的合约。
+   - 连接钱包。
+   - 调用 `donate` 函数，并在 `value` 字段输入想要捐赠的 ETH 数量（例如 0.001 ETH）。
+   - 确认交易。
+
+2. **查询捐赠 (Get Donation)**
+   - 在 `Read Contract` 中调用 `getDonation`。
+   - 输入你的钱包地址，应返回你捐赠的金额（单位 wei）。
+
+3. **提款 (Withdraw)**
+   - 只有合约部署者（Owner）可以调用。
+   - 在 `Write Contract` 中调用 `withdraw`。
+   - 确认交易，合约余额将全部转入你的钱包。
